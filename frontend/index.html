@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Warfarin Dosing Calculator | Xcode Life</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+  <main class="calculator-page">
+
+    <header class="brand-header">
+      <a class="brand" href="https://www.xcode.life/" aria-label="Xcode Life home">
+        <img src="/assets/xcode-life-logo.png" alt="Xcode Life">
+      </a>
+
+      <div class="product-context">
+        <span>Personalized Medicine</span>
+        <strong>Physician's Guide</strong>
+      </div>
+    </header>
+
+    <div class="brand-rule" aria-hidden="true"></div>
+
+    <section class="intro">
+      <p class="section-label">WARFARIN</p>
+      <h1>Warfarin Dosing Calculator</h1>
+
+      <p class="lead">
+        Estimates an expected stable warfarin maintenance dose using clinical factors and,
+        when available, CYP2C9 and VKORC1 genotypes.
+      </p>
+
+      <div class="scope-box">
+        <strong>Clinical Scope:</strong>
+        <span>
+          Intended for adults with a target INR of 2.0–3.0. This calculator estimates an expected stable warfarin maintenance dose. It is not intended for loading-dose selection or INR-based dose adjustment.
+        </span>
+      </div>
+    </section>
+
+    <form id="calculatorForm" class="calculator-form" novalidate>
+
+      <section class="form-section">
+        <div class="section-heading">
+          <h2>Patient information</h2>
+          <p>Enter the clinical variables used by the IWPC dosing equations.</p>
+        </div>
+
+        <div class="field-grid three">
+          <div class="field">
+            <label for="age">Age</label>
+            <div class="input-unit">
+              <input id="age" name="age" type="number" min="18" max="120" placeholder="e.g. 64" required>
+              <span>years</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="height">Height</label>
+            <div class="input-unit">
+              <input id="height" name="height_cm" type="number" min="100" max="250" step="0.1" placeholder="e.g. 172" required>
+              <span>cm</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="weight">Weight</label>
+            <div class="input-unit">
+              <input id="weight" name="weight_kg" type="number" min="25" max="350" step="0.1" placeholder="e.g. 78" required>
+              <span>kg</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-grid two form-row-spaced">
+          <div class="field">
+            <div class="label-row">
+              <label for="population">Self-identified race/population category (IWPC variable)</label>
+              <button class="info-button" type="button" data-target="populationHelp" aria-label="Population category information">i</button>
+            </div>
+
+            <select id="population" name="population" required>
+              <option value="">Select category</option>
+              <option value="white_other">White / Other</option>
+              <option value="asian">Asian</option>
+              <option value="black_african_american">Black or African American</option>
+              <option value="mixed_unknown">Mixed / Unknown</option>
+            </select>
+
+            <p id="populationHelp" class="field-help hidden">
+              Use the patient's self-identified category. This is an explicit variable in the
+              published IWPC algorithm and is not inferred from DNA.
+            </p>
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="targetInr">Target INR</label>
+              <button class="info-button" type="button" data-target="inrHelp" aria-label="Target INR information">i</button>
+            </div>
+
+            <select id="targetInr" name="target_inr" required>
+              <option value="2.0-3.0">2.0–3.0 (Supported)</option>
+              <option value="other">Other — outside calculator scope</option>
+            </select>
+
+            <p id="inrHelp" class="field-help hidden">
+              The IWPC model was built using patients with stable therapeutic warfarin doses and target INR 2.0–3.0.
+              It does not provide validated guidance for INR targets outside that range.
+            </p>
+          </div>
+        </div>
+
+        <div id="africanContextWrap" class="field african-context-wrap hidden">
+          <div class="label-row">
+            <label for="africanContext">rs12777823 population context</label>
+            <button class="info-button" type="button" data-target="africanContextHelp" aria-label="rs12777823 population context information">i</button>
+          </div>
+          <select id="africanContext" name="african_context">
+            <option value="unknown">Unknown / not specified</option>
+            <option value="african_american">African American</option>
+            <option value="other_african">Other African ancestry</option>
+          </select>
+          <p id="africanContextHelp" class="field-help hidden">
+            CPIC's dose-reduction recommendation for rs12777823 was demonstrated specifically in African Americans
+            (predominantly West African ancestry). Its applicability across all African populations is uncertain.
+          </p>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="section-heading">
+          <h2>IWPC medication variables</h2>
+          <p>The following medicines affect the mathematical IWPC estimate. Other medicines and dietary factors may still affect warfarin response and INR.</p>
+        </div>
+
+        <div class="check-row">
+          <label class="check-option">
+            <input id="amiodarone" name="amiodarone" type="checkbox">
+            <span class="check-copy">
+              <strong>Amiodarone</strong>
+              <small>Patient is currently taking amiodarone (reduces predicted dose in IWPC model).</small>
+            </span>
+          </label>
+        </div>
+
+        <div class="check-row">
+          <label class="check-option">
+            <input id="inducer" name="enzyme_inducer" type="checkbox">
+            <span class="check-copy">
+              <strong>Enzyme inducer</strong>
+              <small>Carbamazepine, phenytoin, or rifampin (rifampicin) (increases predicted dose in IWPC model).</small>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <section class="pgx-section">
+        <div class="pgx-title-row pgx-heading-row">
+          <div>
+            <h2>Pharmacogenetic results</h2>
+            <p>
+              Upload an Xcode Life Warfarin input file or enter a reported PGx result manually.
+              Leave this section blank to use the IWPC clinical dosing algorithm.
+            </p>
+          </div>
+          <span>Optional</span>
+        </div>
+
+        <div class="pgx-tabs" role="tablist" aria-label="PGx input method">
+          <button id="uploadTab" class="pgx-tab active" type="button" role="tab" aria-selected="true">Upload Xcode file</button>
+          <button id="manualTab" class="pgx-tab" type="button" role="tab" aria-selected="false">Enter manually</button>
+        </div>
+
+        <div id="uploadPanel" class="pgx-panel">
+          <div class="pgx-actions">
+            <label class="upload-button" for="geneticFile">
+              Choose PGx file
+              <input id="geneticFile" type="file" accept=".csv,text/csv">
+            </label>
+            <button id="clearFile" class="remove-file hidden" type="button">Remove</button>
+          </div>
+
+          <p id="selectedFile" class="selected-file hidden"></p>
+        </div>
+
+        <div id="manualPanel" class="pgx-panel hidden">
+          <div class="manual-block">
+            <div class="manual-block-heading">
+              <div>
+                <strong>CYP2C9</strong>
+                <small>Enter the two star alleles exactly as reported by the PGx test.</small>
+              </div>
+              <button class="info-button" type="button" data-target="starOneHelp" aria-label="CYP2C9 star 1 information">i</button>
+            </div>
+
+            <p id="starOneHelp" class="field-help hidden">
+              Select *1 only when *1 is explicitly reported as part of the CYP2C9 result.
+              Do not use *1 to mean “not tested,” “missing,” or “no result.”
+            </p>
+
+            <div class="field-grid two">
+              <div class="field">
+                <label for="cyp2c9Allele1">Allele 1</label>
+                <select id="cyp2c9Allele1">
+                  <option value="">Not available</option>
+                  <option value="*1">*1</option>
+                  <option value="*2">*2</option>
+                  <option value="*3">*3</option>
+                  <option value="*5">*5</option>
+                  <option value="*6">*6</option>
+                  <option value="*8">*8</option>
+                  <option value="*11">*11</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="cyp2c9Allele2">Allele 2</label>
+                <select id="cyp2c9Allele2">
+                  <option value="">Not available</option>
+                  <option value="*1">*1</option>
+                  <option value="*2">*2</option>
+                  <option value="*3">*3</option>
+                  <option value="*5">*5</option>
+                  <option value="*6">*6</option>
+                  <option value="*8">*8</option>
+                  <option value="*11">*11</option>
+                </select>
+              </div>
+            </div>
+
+            <label class="coverage-confirm">
+              <input id="expandedTested" type="checkbox">
+              <span>The reported test assessed CYP2C9 *5, *6, *8 and *11.</span>
+            </label>
+
+            <p class="inline-help">
+              This coverage confirmation is required for genotype-guided dosing in patients of African ancestry under CPIC guidance.
+            </p>
+          </div>
+
+          <div class="field-grid three manual-lower">
+            <div class="field">
+              <label for="manualVkorc1">VKORC1 c.-1639G&gt;A</label>
+              <select id="manualVkorc1">
+                <option value="">Not available</option>
+                <option value="G/G">G/G</option>
+                <option value="G/A">G/A</option>
+                <option value="A/A">A/A</option>
+              </select>
+              <small class="inline-help">
+                Use clinical -1639 notation (rs9923231).
+              </small>
+            </div>
+
+            <div class="field">
+              <label for="manualCyp4f2">CYP4F2</label>
+              <select id="manualCyp4f2">
+                <option value="">Not available</option>
+                <option value="*1/*1">*1/*1</option>
+                <option value="*1/*3">*1/*3</option>
+                <option value="*3/*3">*3/*3</option>
+              </select>
+              <small class="inline-help">rs2108622 (*3 allele)</small>
+            </div>
+
+            <div class="field">
+              <label for="manualRs127">rs12777823</label>
+              <select id="manualRs127">
+                <option value="">Not available</option>
+                <option value="G/G">G/G</option>
+                <option value="G/A">G/A</option>
+                <option value="A/A">A/A</option>
+              </select>
+              <small class="inline-help">CYP2C cluster variant</small>
+            </div>
+          </div>
+
+          <p class="manual-note">
+            Manual values should come from an explicit laboratory PGx report. Leave any field unselected
+            if that marker was not tested.
+          </p>
+        </div>
+      </section>
+
+      <p id="formError" class="form-error hidden" role="alert"></p>
+
+      <div class="calculate-row">
+        <button id="calculateButton" class="calculate-button" type="submit">
+          Calculate maintenance dose
+        </button>
+      </div>
+    </form>
+
+    <section id="resultCard" class="result-section hidden" aria-live="polite">
+      <div class="result-header">
+        <div>
+          <p class="result-lead-title">Estimated stable maintenance dose</p>
+          <div class="weekly-result">
+            <strong id="weeklyDose">—</strong>
+            <span>mg/week</span>
+          </div>
+        </div>
+
+        <div class="daily-result">
+          <span>Average daily equivalent</span>
+          <strong><span id="dailyDose">—</span> mg/day</strong>
+        </div>
+      </div>
+
+      <div class="pathway-card">
+        <div class="pathway-header">
+          <span>Calculation method</span>
+          <strong id="methodBadge">—</strong>
+        </div>
+        <p id="pathwayReason" class="pathway-reason">—</p>
+      </div>
+
+      <!-- Prominent INR monitoring notice -->
+      <div class="prominent-alert inr-alert">
+        <div class="alert-icon" aria-hidden="true">⚠️</div>
+        <div class="alert-content">
+          <strong>Mandatory INR Monitoring Notice</strong>
+          <p>
+            This estimate does not replace INR-guided dose adjustment. Warfarin dosing must be
+            individualized according to INR response and the patient's clinical circumstances.
+          </p>
+        </div>
+      </div>
+
+      <!-- Prominent Consumer PGx Data Note -->
+      <div class="prominent-alert pgx-alert">
+        <div class="alert-icon" aria-hidden="true">ℹ️</div>
+        <div class="alert-content">
+          <strong>PGx Data Note</strong>
+          <p>
+            Genetic results derived from consumer raw DNA files may have incomplete marker coverage and are not
+            equivalent to comprehensive clinical pharmacogenetic testing. Xcode Life does not perform clinical diagnostic
+            genotyping; actionable findings require confirmation with an appropriately validated clinical PGx test before altering therapy.
+          </p>
+        </div>
+      </div>
+
+      <!-- Genetic summary if used -->
+      <div id="geneticSummary" class="pgx-summary hidden">
+        <div class="genetic-info-header">
+          <h3>Genetic information</h3>
+          <p class="genetic-info-note">Core genetic inputs used by the original IWPC equation: CYP2C9 *2/*3 status and VKORC1 c.-1639G&gt;A.</p>
+        </div>
+        <table>
+          <tbody>
+            <tr>
+              <th>CYP2C9</th>
+              <td id="summaryCYP2C9">—</td>
+            </tr>
+            <tr>
+              <th>VKORC1</th>
+              <td id="summaryVKORC1">—</td>
+            </tr>
+            <tr>
+              <th>CYP4F2</th>
+              <td id="summaryCYP4F2">—</td>
+            </tr>
+            <tr id="summaryRs127Row">
+              <th>rs12777823</th>
+              <td id="summaryRs127">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Separate CPIC considerations -->
+      <div id="pgxNotes" class="pgx-notes hidden">
+        <div class="notes-header">
+          <h3>Additional CPIC Pharmacogenetic Considerations</h3>
+          <p class="notes-subheading">
+            These considerations are shown separately from the IWPC dose estimate. The calculator does not automatically combine multiple CPIC percentage adjustments into a single modified dose.
+          </p>
+        </div>
+        <div id="pgxNotesList"></div>
+      </div>
+
+      <div id="warningsCard" class="result-warning hidden">
+        <p id="warnings"></p>
+      </div>
+
+      <div class="clinician-note">
+        <h3>Clinical Use</h3>
+        <p>
+          This calculator provides an estimate of the expected <strong>stable warfarin maintenance dose</strong> for adults with a target INR of 2.0–3.0.
+        </p>
+        <p>
+          The calculated weekly dose should be interpreted together with the patient's clinical circumstances and translated by the treating clinician into an appropriate practical dosing regimen. Subsequent warfarin dosing should be individualized according to <strong>INR response, indication, interacting medications, diet, comorbidities, and other relevant clinical factors</strong>.
+        </p>
+        <p class="clinician-note-emphasis">
+          <strong>The calculated estimate does not replace INR monitoring or clinical judgment.</strong>
+        </p>
+      </div>
+    </section>
+
+    <!-- Methodology & Official FAQ Section -->
+    <section class="methodology">
+      <details>
+        <summary>Frequently Asked Questions & Methodology</summary>
+
+        <div class="methodology-body">
+          <div class="methodology-block faq-block">
+            <h2>Frequently Asked Questions</h2>
+
+            <div class="faq-item">
+              <h3>1. What does this calculator estimate?</h3>
+              <p>
+                This calculator estimates an expected stable warfarin maintenance dose in milligrams per week
+                and provides the corresponding average daily dose. It is intended for adult patients with a
+                target INR of 2.0–3.0. The result is a dose estimate and is not a prescription, loading-dose
+                recommendation, or INR-based dose adjustment.
+              </p>
+            </div>
+
+            <div class="faq-item">
+              <h3>2. Which dosing algorithm does the calculator use?</h3>
+              <p>
+                The calculator uses the published International Warfarin Pharmacogenetics Consortium (IWPC) dosing algorithms.
+                Two calculation pathways are available:
+              </p>
+              <ul>
+                <li><strong>Pharmacogenetic IWPC algorithm:</strong> Uses clinical information together with suitable CYP2C9 and VKORC1 genetic information.</li>
+                <li><strong>Clinical IWPC algorithm:</strong> Uses clinical information alone when suitable pharmacogenetic information is unavailable or does not meet the requirements for the PGx pathway.</li>
+              </ul>
+              <p>The calculator identifies which pathway was used for each result.</p>
+            </div>
+
+            <div class="faq-item">
+              <h3>3. What clinical information is used in the calculation?</h3>
+              <p>The IWPC algorithm uses:</p>
+              <ul>
+                <li>Age</li>
+                <li>Height</li>
+                <li>Weight</li>
+                <li>Self-identified population category</li>
+                <li>Amiodarone use</li>
+                <li>Use of specific enzyme-inducing medications included in the IWPC model</li>
+              </ul>
+              <p>
+                For the enzyme-inducer variable, the IWPC model includes carbamazepine, phenytoin, and rifampin/rifampicin.
+                These variables are part of the published dosing equation and should not be interpreted as a complete assessment of all factors that can influence warfarin response.
+              </p>
+            </div>
+
+            <div class="faq-item">
+              <h3>4. Which genetic results are used?</h3>
+              <p>The core IWPC pharmacogenetic calculation uses:</p>
+              <ul>
+                <li>CYP2C9 *2 and *3</li>
+                <li>VKORC1 c.-1639G&gt;A (rs9923231)</li>
+              </ul>
+              <p>Additional variants may be considered separately according to CPIC guidance:</p>
+              <ul>
+                <li>CYP2C9 *5, *6, *8, and *11</li>
+                <li>CYP4F2 rs2108622</li>
+                <li>CYP2C rs12777823</li>
+              </ul>
+              <p>These additional findings are displayed separately rather than automatically incorporated into the original IWPC equation.</p>
+            </div>
+
+            <div class="faq-item">
+              <h3>5. What happens if a required genetic result is missing?</h3>
+              <p>
+                A missing genetic result is not assumed to be normal. If the genetic information required for the
+                pharmacogenetic calculation is unavailable or unsuitable, the calculator uses the published IWPC
+                clinical dosing algorithm when appropriate. The result screen identifies when clinical-only dosing
+                has been used and explains why.
+              </p>
+            </div>
+
+            <div class="faq-item">
+              <h3>6. Why is self-identified population information requested?</h3>
+              <p>
+                Population information is one of the variables included in the published IWPC equations.
+                It is also relevant to the implementation of CPIC pharmacogenetic guidance because the frequencies
+                and clinical importance of some CYP2C9 variants differ among ancestry groups. Population category
+                must be entered from the patient's clinical information. It is not inferred from the patient's DNA by this calculator.
+              </p>
+            </div>
+
+            <div class="faq-item">
+              <h3>7. Why are CYP2C9 *5, *6, *8, and *11 important for patients of African ancestry?</h3>
+              <p>
+                CYP2C9 *5, *6, *8, and *11 are reduced-function alleles that occur more commonly in populations of African ancestry.
+                CPIC recommends that these alleles be considered when genotype-guided warfarin dosing is used for patients of African ancestry.
+                If adequate testing for these alleles is not available, this calculator does not assume they are absent and instead uses the clinical dosing pathway.
+              </p>
+            </div>
+
+            <div class="faq-item">
+              <h3>8. What is rs12777823 and when is it used?</h3>
+              <p>
+                rs12777823 is a variant in the CYP2C gene region associated with warfarin dose requirements in African Americans.
+                When the relevant population context and genotype information are available, CPIC provides an additional dose-reduction
+                recommendation for carriers of the A allele. This consideration is displayed separately from the original IWPC dose estimate.
+              </p>
+            </div>
+
+            <div class="faq-item">
+              <h3>9. What role does CYP4F2 play?</h3>
+              <p>
+                The CYP4F2 rs2108622 variant can modestly influence warfarin dose requirements. For appropriate patients,
+                CPIC allows an additional dose-increase consideration for carriers of the CYP4F2*3-associated allele.
+                Because CYP4F2 is not part of the original IWPC equation, this calculator displays the CPIC consideration
+                separately rather than silently modifying the IWPC result.
+              </p>
+            </div>
+
+            <div class="faq-item">
+              <h3>10. Why are some CPIC adjustments shown separately from the calculated dose?</h3>
+              <p>
+                The original IWPC equation was developed using a specific set of clinical and genetic variables.
+                CPIC subsequently provided additional recommendations for variants including CYP2C9 *5, *6, *8, *11,
+                CYP4F2, and rs12777823. To preserve the published IWPC calculation, this calculator reports these
+                additional CPIC considerations separately rather than combining them automatically into a new,
+                unpublished equation.
+              </p>
+            </div>
+
+            <div class="faq-item">
+              <h3>11. Does the calculator provide a safe dose range?</h3>
+              <p>
+                No. The IWPC algorithm produces an estimated stable maintenance dose. The calculated value should
+                not be interpreted as an exact dose or as a patient-specific safe range. Warfarin has substantial
+                variability between individuals, and the appropriate dose must ultimately be determined using
+                INR response and clinical assessment.
+              </p>
+            </div>
+
+            <div class="faq-item">
+              <h3>12. Does the calculated daily dose represent a tablet schedule?</h3>
+              <p>
+                No. The daily value shown is the calculated weekly dose divided by seven and represents an average daily equivalent.
+                It does not specify tablet strength, alternating-day dosing, or a prescribed weekly tablet schedule.
+                The treating clinician should determine the practical dosing regimen.
+              </p>
+            </div>
+
+            <div class="faq-item">
+              <h3>13. Can this calculator be used to adjust a patient's current dose based on today's INR?</h3>
+              <p>
+                No. This version estimates an expected stable maintenance dose using the IWPC algorithms.
+                It does not calculate dose changes from a current INR, previous warfarin doses, or recent treatment response.
+                Ongoing warfarin management should follow INR-guided clinical protocols.
+              </p>
+            </div>
+
+            <div class="faq-item">
+              <h3>14. Does this calculator replace INR monitoring?</h3>
+              <p>
+                No. Genetic and clinical information can help estimate warfarin dose requirements, but they do not replace INR monitoring.
+                Warfarin dosing must continue to be individualized according to INR response, indication, interacting medications,
+                dietary factors, comorbidities, and other relevant clinical information.
+              </p>
+            </div>
+
+            <div class="faq-item">
+              <h3>15. Can results derived from consumer raw DNA be used directly to change treatment?</h3>
+              <p>
+                Consumer raw DNA files may have incomplete genetic-marker coverage and are not equivalent to comprehensive
+                clinical pharmacogenetic testing. Genetic findings intended to influence prescribing or dosing should be
+                reviewed by the treating clinician and, when appropriate, confirmed using a validated clinical
+                pharmacogenetic test before treatment decisions are made.
+              </p>
+            </div>
+
+            <div class="faq-item">
+              <h3>16. What does CYP2C9 *1 mean?</h3>
+              <p>
+                CYP2C9 *1 generally indicates that no defining alternative allele was identified at the relevant positions that were available for analysis.
+                When the source is a consumer raw DNA file, not every position required to characterize CYP2C9 may have been tested.
+                Therefore, a *1 result should not be interpreted as proof that the entire gene was sequenced or that all possible reduced-function variants were excluded.
+              </p>
+            </div>
+
+            <div class="faq-item">
+              <h3>17. What should a clinician do with the calculated result?</h3>
+              <p>
+                Use the result as one source of information when estimating warfarin maintenance requirements.
+                Before applying it clinically, review: the patient's indication and target INR, the genetic-test source and marker coverage,
+                interacting medications and other clinical factors, and the patient's INR response.
+                The final warfarin regimen and subsequent dose adjustments should remain under clinician supervision.
+              </p>
+            </div>
+          </div>
+
+          <!-- Mathematical formulas used -->
+          <div class="methodology-block">
+            <h2>IWPC Published Equations</h2>
+            <div class="formula">
+              <span>IWPC Clinical Dosing Equation:</span>
+              <code>
+                √ weekly dose = 4.0376
+                  − 0.2546 × age in decades
+                  + 0.0118 × height (cm)
+                  + 0.0134 × weight (kg)
+                  − 0.6752 × Asian
+                  + 0.4060 × Black/African American
+                  + 0.0443 × Mixed/Unknown
+                  + 1.2799 × enzyme inducer
+                  − 0.5695 × amiodarone
+              </code>
+            </div>
+
+            <div class="formula">
+              <span>IWPC Pharmacogenetic Dosing Equation (Original 2009 NEJM Model):</span>
+              <code>
+                √ weekly dose = 5.6044
+                  − 0.2614 × age in decades
+                  + 0.0087 × height (cm)
+                  + 0.0128 × weight (kg)
+                  − 0.8677 × VKORC1 G/A
+                  − 1.6974 × VKORC1 A/A
+                  − 0.4854 × VKORC1 genotype unknown
+                  − 0.5211 × CYP2C9 *1/*2
+                  − 0.9357 × CYP2C9 *1/*3
+                  − 1.0616 × CYP2C9 *2/*2
+                  − 1.9206 × CYP2C9 *2/*3
+                  − 2.3312 × CYP2C9 *3/*3
+                  − 0.2188 × CYP2C9 genotype unknown
+                  − 0.1092 × Asian
+                  − 0.2760 × Black/African American
+                  − 0.1032 × Mixed/Unknown
+                  + 1.1816 × enzyme inducer
+                  − 0.5503 × amiodarone
+              </code>
+            </div>
+            <p class="formula-note">
+              <strong>Implementation note on unknown genotype coefficients:</strong>
+              The published 2009 IWPC pharmacogenetic equation included coefficients for unknown VKORC1 (−0.4854)
+              and unknown CYP2C9 (−0.2188). Xcode Life does not apply these unknown-genotype coefficients.
+              When genotype data are incomplete or unavailable, Xcode Life instead uses the dedicated IWPC
+              clinical dosing algorithm, consistent with CPIC implementation guidance.
+            </p>
+            <p class="formula-note">
+              The equation value is squared to obtain the estimated weekly dose in mg/week.
+              Dividing by 7 provides the average daily equivalent in mg/day. Age in decades is binned as
+              min(floor(age / 10), 9), where age 90+ is binned as 9.
+            </p>
+          </div>
+
+          <!-- Scientific References -->
+          <div class="methodology-block references">
+            <h2>Scientific References</h2>
+            <ol class="references-list">
+              <li>
+                <strong>International Warfarin Pharmacogenetics Consortium.</strong>
+                Estimation of the warfarin dose with clinical and pharmacogenetic data.
+                <em>N Engl J Med.</em> 2009;360(8):753–764.
+                <a href="https://doi.org/10.1056/NEJMoa0809329" target="_blank" rel="noopener">doi:10.1056/NEJMoa0809329</a>
+              </li>
+              <li>
+                <strong>Johnson JA, Caudle KE, Gong L, et al.</strong>
+                Clinical Pharmacogenetics Implementation Consortium (CPIC) Guideline for Pharmacogenetics-Guided Warfarin Dosing: 2017 Update.
+                <em>Clin Pharmacol Ther.</em> 2017;102(3):397–404.
+                <a href="https://pubmed.ncbi.nlm.nih.gov/28198005/" target="_blank" rel="noopener">PubMed: 28198005</a>
+              </li>
+              <li>
+                <strong>Clinical Pharmacogenetics Implementation Consortium (CPIC).</strong>
+                CPIC Guideline for Warfarin Supplementary Material and Evidence Tables (2017).
+                <a href="https://files.cpicpgx.org/data/guideline/publication/warfarin/2017/warfarin.pdf" target="_blank" rel="noopener">CPIC Warfarin Guideline PDF</a>
+              </li>
+              <li>
+                <strong>U.S. National Library of Medicine / DailyMed.</strong>
+                Warfarin Sodium Tablets Prescribing Information. Expected maintenance-dose ranges by CYP2C9 and VKORC1 genotypes.
+                <a href="https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=bd6ea120-5d1c-4815-94f2-81e28dc6b7a9" target="_blank" rel="noopener">DailyMed Warfarin Sodium Tablets Prescribing Information</a>
+              </li>
+              <li>
+                <strong>U.S. Food and Drug Administration (FDA).</strong>
+                Direct-to-Consumer Tests: Pharmacogenetic Tests. Safety communications and regulatory considerations for consumer genetic health data.
+                <a href="https://www.fda.gov/medical-devices/in-vitro-diagnostics/direct-consumer-tests#pharmacogenetic" target="_blank" rel="noopener">FDA Direct-to-Consumer PGx Tests Guidance</a>
+              </li>
+            </ol>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <footer class="calculator-footer">
+      <span>Xcode Life Personalized Medicine</span>
+      <span>IWPC dose estimation · CPIC-guided PGx interpretation</span>
+    </footer>
+
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
