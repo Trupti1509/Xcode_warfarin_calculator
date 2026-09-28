@@ -57,54 +57,91 @@ $$\sqrt{\text{weekly dose}} = 5.6044 - 0.2614(\text{age}_{\text{decades}}) + 0.0
 ```
 Xcode_Warfarin_Calculator/
 ├── backend/
-│   ├── app.py                    # Flask application and API routing
-│   ├── warfarin_logic.py         # IWPC & CPIC calculation engine & QC rules
-│   ├── test_warfarin_logic.py    # Automated test suite (IWPC QA benchmarks)
-│   ├── test_api.py               # API endpoint test suite
-│   └── requirements.txt          # Dependencies (Flask)
+│   ├── app.py                   # Flask app that serves the calculator locally
+│   ├── warfarin_logic.py        # IWPC and CPIC dosing logic
+│   └── requirements.txt         # Python dependencies for the app
 ├── frontend/
-│   ├── index.html                # Form, result display, 17-item FAQ, references
-│   ├── styles.css                # Xcode Life clinical aesthetic styling
-│   ├── app.js                    # Form submission, validation, result rendering
+│   ├── index.html               # Calculator UI
+│   ├── app.js                   # Frontend logic and API requests
+│   ├── styles.css               # Page styling
 │   └── assets/
-│       └── xcode-life-logo.png   # Xcode Life logo
-└── README.md
+│       └── xcode-life-logo.png  # Branding asset
+├── README.md                    # Project documentation
+├── .gitignore
+├── .venv                        # Local virtual environment (created by you)
+└── requirements.txt             # Optional root file if needed for other env setups
 ```
+
+> For local use, you only need the backend and frontend folders. Deployment files are optional and not required for running the app on your machine.
 
 ---
 
-## 4. Running Locally
+## 4. How to Run and Use This Calculator Locally
 
-### 1. Set up Python environment
-```bash
+### Step 1: Create a virtual environment
+
+Open PowerShell in the project folder and run:
+
+```powershell
 python -m venv .venv
 ```
 
-Windows:
+Then activate it:
+
 ```powershell
-.venv\Scripts\activate
+.\.venv\Scripts\Activate.ps1
 ```
 
-### 2. Install requirements
-```bash
-pip install -r backend/requirements.txt
+### Step 2: Install the required Python packages
+
+```powershell
+pip install -r backend\requirements.txt
 ```
 
-### 3. Run automated tests
+### Step 3: Start the app
+
+```powershell
+python backend\app.py
+```
+
+After the server starts, open this in your browser:
+
+```text
+http://127.0.0.1:5000
+```
+
+### Step 4: Use the calculator
+
+1. Enter the patient age, height, and weight.
+2. Choose the appropriate patient ancestry or population category.
+3. Select medication factors such as amiodarone use or enzyme inducers.
+4. Add genotype data if available, or leave them blank to use the clinical dosing pathway.
+5. Click Calculate.
+6. Review the result, including the estimated weekly dose and the daily equivalent.
+
+### What the calculator provides
+
+- Estimated stable warfarin maintenance dose in mg/week
+- Equivalent average daily dose in mg/day
+- Calculation pathway used: clinical or pharmacogenetic
+- Clinical/PGx notes and warnings when relevant
+
+### Important notes
+
+- This tool is for estimation only and does not replace clinical judgment.
+- It is not a loading-dose calculator and does not replace INR-guided dose adjustment.
+- Missing genetic data are not assumed to be normal.
+- The calculator is meant to support clinical review, not act as a prescription.
+
+### Optional validation
+
+If you want to confirm the calculation logic before using the app:
+
 ```powershell
 python -m unittest discover -s backend
 ```
 
-All unit tests (including the published IWPC publication benchmark of 29.5 mg/week, clinical fallback, African ancestry gates, age decade capping at 9 for centenarians, and CPIC considerations) will execute and verify formula integrity.
-
-### 4. Start the server
-```powershell
-python backend/app.py
-```
-Open your browser at:
-```
-http://127.0.0.1:5000
-```
+This checks the local dosing logic and backend behavior.
 
 ---
 
